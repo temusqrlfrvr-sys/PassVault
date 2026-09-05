@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusVault — Secure Password Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #111827;
+            --bg-surface-hover: #1f2937;
+            --border-subtle: #1f2937;
+            --border-default: #374151;
+            --border-focus: #6366f1;
+            
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --success: #10b981;
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-image: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 860px;
+            padding: 24px;
+            z-index: 10;
+        }
+
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 36px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--text-main);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        input:hover {
+            border-color: var(--text-dim);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: var(--transition);
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button.danger {
+            background-color: var(--danger);
+        }
+        button.danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        button.secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-default);
+            color: var(--text-main);
+        }
+        button.secondary:hover {
+            background-color: var(--bg-surface-hover);
+            border-color: var(--text-dim);
+        }
+
+        .tabs-header {
+            display: flex;
+            background-color: var(--bg-base);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 28px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 10px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: var(--transition);
+            margin-bottom: 0;
+        }
+
+        .tab-btn.active {
+            color: var(--text-main);
+            background-color: var(--bg-surface);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .vault-item, .credential-item, .admin-row {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .vault-item:hover, .credential-item:hover {
+            border-color: var(--border-default);
+            transform: translateY(-2px);
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .flex-row button {
+            margin-bottom: 0;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 24px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid var(--border-subtle);
+            margin: 28px 0;
+        }
+
+        .flagged {
+            border-color: var(--warning) !important;
+            background-color: rgba(245, 158, 11, 0.03);
+        }
+
+        .badge {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Modal Overlays with Flex Active State Support */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(9, 13, 22, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex !important;
+        }
+
+        .modal-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="authView" class="card view active">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 8px;">NexusVault</h1>
+                <p>Enterprise-grade security, simplified.</p>
+            </div>
+
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+                <button class="tab-btn" onclick="switchAuthTab('register')">Create Account</button>
+            </div>
+
+            <div id="loginTab" class="auth-content">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUser" placeholder="Enter your username">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPass" placeholder="Enter your password">
+                </div>
+                <button onclick="handleLogin()">Sign In</button>
+            </div>
+
+            <div id="registerTab" class="auth-content" style="display: none;">
+                <div class="input-group">
+                    <label>Choose Username</label>
+                    <input type="text" id="regUser" placeholder="Choose a username">
+                </div>
+                <div class="input-group">
+                    <label>Choose Password</label>
+                    <input type="password" id="regPass" placeholder="Create a secure password">
+                </div>
+                <button onclick="handleRegister()">Create Account</button>
+            </div>
+        </div>
+
+        <div id="dashboardView" class="card view">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchDashboardTab('vaults')">Vaults</button>
+                <button class="tab-btn" onclick="switchDashboardTab('settings')">Settings</button>
+                <button id="adminTabBtn" class="tab-btn" style="display: none;" onclick="switchDashboardTab('admin')">Admin Panel</button>
+            </div>
+
+            <div id="vaultsTab" class="dashboard-content">
+                <div id="vaultListContainer">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h2>Your Secure Vaults</h2>
+                            <p style="font-size: 0.85rem;">Select a vault to view or manage credentials.</p>
+                        </div>
+                        <button onclick="showCreateVaultModal()" style="width: auto;">+ New Vault</button>
+                    </div>
+                    <div id="vaultsGrid" class="grid">
+                        </div>
+                </div>
+
+                <div id="vaultInteriorContainer" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h2 id="currentVaultTitle" style="margin-bottom: 4px;">Vault Name</h2>
+                            <p style="font-size: 0.85rem;">Encrypted items inside this container.</p>
+                        </div>
+                        <button class="secondary" onclick="closeVault()" style="width: auto;">← Back to Vaults</button>
+                    </div>
+
+                    <div style="background-color: var(--bg-base); border: 1px solid var(--border-subtle); padding: 16px; border-radius: var(--radius-md); margin-bottom: 20px;">
+                        <p style="font-size: 0.85rem; font-weight: 500; margin-bottom: 12px; color: var(--text-main);">Add New Credential</p>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1.2fr auto; gap: 10px;">
+                            <input type="text" id="newSite" placeholder="Website / Service" style="margin-bottom:0;">
+                            <input type="text" id="newUsername" placeholder="Username / Email" style="margin-bottom:0;">
+                            <input type="password" id="newPassword" placeholder="Password" style="margin-bottom:0;">
+                            <button onclick="addCredential()" style="width: auto; margin-bottom:0;">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="credentialsGrid" class="grid">
+                        </div>
+                </div>
+            </div>
+
+            <div id="settingsTab" class="dashboard-content" style="display: none;">
+                <h2>Account Settings</h2>
+                <div style="max-width: 400px; margin-bottom: 24px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Update Password</h3>
+                    <div class="input-group">
+                        <label>Current Password</label>
+                        <input type="password" id="currentPassInput" placeholder="••••••••">
+                    </div>
+                    <div class="input-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassInput" placeholder="••••••••">
+                    </div>
+                    <button onclick="handleChangePassword()">Save Changes</button>
+                </div>
+                <hr>
+                <div style="display: flex; gap: 12px;">
+                    <button class="secondary" onclick="handleSignOut()" style="width: auto;">Sign Out</button>
+                    <button class="danger" onclick="handleDeleteAccount()" style="width: auto;">Delete Account</button>
+                </div>
+            </div>
+
+            <div id="adminTab" class="dashboard-content" style="display: none;">
+                <h2>System Administration</h2>
+                <p style="margin-bottom: 20px;">Monitor platform users, restrict accounts, or manage database elements.</p>
+                <div id="adminUserList" style="display: flex; flex-direction: column; gap: 12px;">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createVaultModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2>Create New Vault</h2>
+            <div class="input-group">
+                <label>Vault Label</label>
+                <input type="text" id="vaultNameInput" placeholder="e.g., Personal, Work">
+            </div>
+            <div class="flex-row" style="margin-top: 24px;">
+                <button onclick="createVault()">Initialize Vault</button>
+                <button class="secondary" onclick="hideCreateVaultModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editCredModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2>Edit Credential</h2>
+            <input type="hidden" id="editCredIndex">
+            <div class="input-group">
+                <label>Website / Service</label>
+                <input type="text" id="editSite">
+            </div>
+            <div class="input-group">
+                <label>Username / Email</label>
+                <input type="text" id="editUsername">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="editPassword">
+            </div>
+            <div class="flex-row" style="margin-top: 24px;">
+                <button onclick="saveEditedCredential()">Update</button>
+                <button class="secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="watermark">Created by LW Devs</div>
+
+    <script>
+        let users = JSON.parse(localStorage.getItem('lw_vault_users')) || [
+            { username: 'LWAdmin', password: 'annyeonghaseyo', vaults: [], flagged: false, isAdmin: true }
+        ];
+        let currentUser = null;
+        let currentVaultIndex = null;
+
+        function saveDB() {
+            const userIndex = users.findIndex(u => u.username === currentUser.username);
+            if (userIndex !== -1) {
+                users[userIndex] = currentUser;
+            }
+            localStorage.setItem('lw_vault_users', JSON.stringify(users));
+        }
+
+        function switchAuthTab(tab) {
+            document.querySelectorAll('#authView .tab-btn').forEach(b => b.classList.remove('active'));
+            if (tab === 'login') {
+                document.querySelectorAll('#authView .tab-btn')[0].classList.add('active');
+                document.getElementById('loginTab').style.display = 'block';
+                document.getElementById('registerTab').style.display = 'none';
+            } else {
+                document.querySelectorAll('#authView .tab-btn')[1].classList.add('active');
+                document.getElementById('loginTab').style.display = 'none';
+                document.getElementById('registerTab').style.display = 'block';
+            }
+        }
+
+        function switchDashboardTab(tab) {
+            document.querySelectorAll('#dashboardView .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.dashboard-content').forEach(c => c.style.display = 'none');
+
+            if (tab === 'vaults') {
+                document.querySelectorAll('#dashboardView .tab-btn')[0].classList.add('active');
+                document.getElementById('vaultsTab').style.display = 'block';
+            } else if (tab === 'settings') {
+                document.querySelectorAll('#dashboardView .tab-btn')[1].classList.add('active');
+                document.getElementById('settingsTab').style.display = 'block';
+            } else if (tab === 'admin') {
+                document.getElementById('adminTabBtn').classList.add('active');
+                document.getElementById('adminTab').style.display = 'block';
+                renderAdminPanel();
+            }
+        }
+
+        function handleRegister() {
+            const user = document.getElementById('regUser').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+            if (!user || !pass) return alert('Please complete all fields.');
+            
+            if (users.find(u => u.username === user)) {
+                return alert('Username is already taken.');
+            }
+
+            users.push({ username: user, password: pass, vaults: [], flagged: false, isAdmin: false });
+            localStorage.setItem('lw_vault_users', JSON.stringify(users));
+            alert('Registration complete. Please sign in.');
+            switchAuthTab('login');
+        }
+
+        function handleLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            
+            users = JSON.parse(localStorage.getItem('lw_vault_users')) || users;
+
+            const found = users.find(u => u.username === user && u.password === pass);
+            if (!found) return alert('Invalid credentials provided.');
+            if (found.flagged) return alert('This account has been suspended or flagged.');
+
+            currentUser = found;
+            document.getElementById('authView').classList.remove('active');
+            document.getElementById('dashboardView').classList.add('active');
+
+            if (currentUser.isAdmin) {
+                document.getElementById('adminTabBtn').style.display = 'block';
+            } else {
+                document.getElementById('adminTabBtn').style.display = 'none';
+            }
+
+            renderVaults();
+        }
+
+        function handleSignOut() {
+            currentUser = null;
+            currentVaultIndex = null;
+            document.getElementById('dashboardView').classList.remove('active');
+            document.getElementById('authView').classList.add('active');
+            closeVault();
+        }
+
+        function handleChangePassword() {
+            const currentPass = document.getElementById('currentPassInput').value;
+            const newPass = document.getElementById('newPassInput').value;
+
+            if (currentPass !== currentUser.password) {
+                return alert('Current password does not match.');
+            }
+            if (!newPass) return alert('New password cannot be blank.');
+
+            currentUser.password = newPass;
+            saveDB();
+            alert('Password updated securely.');
+            document.getElementById('currentPassInput').value = '';
+            document.getElementById('newPassInput').value = '';
+        }
+
+        function handleDeleteAccount() {
+            if (confirm('Are you sure you want to permanently delete your account?')) {
+                users = users.filter(u => u.username !== currentUser.username);
+                localStorage.setItem('lw_vault_users', JSON.stringify(users));
+                handleSignOut();
+            }
+        }
+
+        function showCreateVaultModal() {
+            document.getElementById('createVaultModal').classList.add('active');
+        }
+
+        function hideCreateVaultModal() {
+            document.getElementById('createVaultModal').classList.remove('active');
+            document.getElementById('vaultNameInput').value = '';
+        }
+
+        function createVault() {
+            const name = document.getElementById('vaultNameInput').value.trim();
+
+            if (!name) return alert('Please enter a vault label.');
+
+            currentUser.vaults.push({
+                name: name,
+                credentials: []
+            });
+
+            saveDB();
+            hideCreateVaultModal();
+            renderVaults();
+        }
+
+        function renderVaults() {
+            const grid = document.getElementById('vaultsGrid');
+            grid.innerHTML = '';
+
+            currentUser.vaults.forEach((vault, idx) => {
+                const item = document.createElement('div');
+                item.className = 'vault-item';
+                item.innerHTML = `
+                    <div>
+                        <h3 style="font-size: 1.1rem; margin-bottom: 4px;">${vault.name}</h3>
+                        <p style="font-size: 0.85rem; margin-bottom: 12px;">${vault.credentials.length} items stored</p>
+                    </div>
+                    <div class="flex-row" style="margin-top: 16px;">
+                        <button onclick="accessVault(${idx})">Open</button>
+                        <button class="danger" onclick="deleteVault(${idx})" style="width: auto;">Delete</button>
+                    </div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        function deleteVault(index) {
+            if (confirm('Delete this vault and all its contents?')) {
+                currentUser.vaults.splice(index, 1);
+                saveDB();
+                renderVaults();
+            }
+        }
+
+        function accessVault(index) {
+            openVaultInterior(index);
+        }
+
+        function openVaultInterior(index) {
+            currentVaultIndex = index;
+            const vault = currentUser.vaults[index];
+            document.getElementById('currentVaultTitle').innerText = vault.name;
+            document.getElementById('vaultListContainer').style.display = 'none';
+            document.getElementById('vaultInteriorContainer').style.display = 'block';
+            renderCredentials();
+        }
+
+        function closeVault() {
+            currentVaultIndex = null;
+            document.getElementById('vaultInteriorContainer').style.display = 'none';
+            document.getElementById('vaultListContainer').style.display = 'block';
+            renderVaults();
+        }
+
+        function addCredential() {
+            const site = document.getElementById('newSite').value.trim();
+            const user = document.getElementById('newUsername').value.trim();
+            const pass = document.getElementById('newPassword').value.trim();
+
+            if (!site || !user || !pass) return alert('All credential fields are required.');
+
+            currentUser.vaults[currentVaultIndex].credentials.push({ site, user, pass });
+            saveDB();
+
+            document.getElementById('newSite').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            renderCredentials();
+        }
+
+        function renderCredentials() {
+            const grid = document.getElementById('credentialsGrid');
+            grid.innerHTML = '';
+            const credentials = currentUser.vaults[currentVaultIndex].credentials;
+
+            credentials.forEach((cred, idx) => {
+                const item = document.createElement('div');
+                item.className = 'credential-item';
+                item.innerHTML = `
+                    <div>
+                        <h3 style="font-size: 1.05rem; margin-bottom: 4px;">${cred.site}</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">User: ${cred.user}</p>
+                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 2px;">Pass: ••••••••</p>
+                    </div>
+                    <div class="flex-row" style="margin-top: 16px;">
+                        <button class="secondary" onclick="showEditModal(${idx})">Edit</button>
+                        <button class="danger" onclick="deleteCredential(${idx})" style="width: auto;">Delete</button>
+                    </div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        function deleteCredential(index) {
+            currentUser.vaults[currentVaultIndex].credentials.splice(index, 1);
+            saveDB();
+            renderCredentials();
+        }
+
+        function showEditModal(index) {
+            const cred = currentUser.vaults[currentVaultIndex].credentials[index];
+            document.getElementById('editCredIndex').value = index;
+            document.getElementById('editSite').value = cred.site;
+            document.getElementById('editUsername').value = cred.user;
+            document.getElementById('editPassword').value = cred.pass;
+            document.getElementById('editCredModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editCredModal').classList.remove('active');
+        }
+
+        function saveEditedCredential() {
+            const index = document.getElementById('editCredIndex').value;
+            const site = document.getElementById('editSite').value.trim();
+            const user = document.getElementById('editUsername').value.trim();
+            const pass = document.getElementById('editPassword').value.trim();
+
+            if (!site || !user || !pass) return alert('All fields must be filled.');
+
+            currentUser.vaults[currentVaultIndex].credentials[index] = { site, user, pass };
+            saveDB();
+            closeEditModal();
+            renderCredentials();
+        }
+
+        function renderAdminPanel() {
+            users = JSON.parse(localStorage.getItem('lw_vault_users')) || users;
+            const container = document.getElementById('adminUserList');
+            container.innerHTML = '';
+
+            users.forEach((u, idx) => {
+                if (u.username === 'LWAdmin') return;
+
+                const row = document.createElement('div');
+                row.className = 'admin-row';
+                if (u.flagged) row.classList.add('flagged');
+                
+                row.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
+                                <strong style="font-size: 0.95rem;">${u.username}</strong> 
+                                ${u.flagged ? '<span class="badge">Flagged</span>' : ''}
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-dim);">Vaults: ${u.vaults.length}</p>
+                        </div>
+                        <div class="flex-row" style="width: auto;">
+                            <button class="secondary" onclick="toggleFlagUser(${idx})" style="width: auto;">${u.flagged ? 'Unflag' : 'Flag'}</button>
+                            <button class="danger" onclick="adminDeleteUser(${idx})" style="width: auto;">Delete</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function toggleFlagUser(index) {
+            users[index].flagged = !users[index].flagged;
+            localStorage.setItem('lw_vault_users', JSON.stringify(users));
+            renderAdminPanel();
+        }
+
+        function adminDeleteUser(index) {
+            if (confirm(`Are you sure you want to delete user ${users[index].username}?`)) {
+                users.splice(index, 1);
+                localStorage.setItem('lw_vault_users', JSON.stringify(users));
+                renderAdminPanel();
+            }
+        }
+    </script>
+</body>
+</html>
