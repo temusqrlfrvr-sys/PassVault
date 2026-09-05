@@ -662,15 +662,29 @@
                     <div>
                         <h3 style="font-size: 1.05rem; margin-bottom: 4px;">${cred.site}</h3>
                         <p style="font-size: 0.85rem; color: var(--text-muted);">User: ${cred.user}</p>
-                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 2px;">Pass: ••••••••</p>
+                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 2px;">Pass: <span id="passSpan_${idx}">••••••••</span></p>
                     </div>
                     <div class="flex-row" style="margin-top: 16px;">
+                        <button class="secondary" onclick="togglePassword(${idx}, '${cred.pass}')" id="revealBtn_${idx}" style="width: auto;">Reveal</button>
                         <button class="secondary" onclick="showEditModal(${idx})">Edit</button>
                         <button class="danger" onclick="deleteCredential(${idx})" style="width: auto;">Delete</button>
                     </div>
                 `;
                 grid.appendChild(item);
             });
+        }
+
+        function togglePassword(index, password) {
+            const span = document.getElementById(`passSpan_${index}`);
+            const btn = document.getElementById(`revealBtn_${index}`);
+
+            if (span.innerText === '••••••••') {
+                span.innerText = password;
+                btn.innerText = 'Hide';
+            } else {
+                span.innerText = '••••••••';
+                btn.innerText = 'Reveal';
+            }
         }
 
         function deleteCredential(index) {
